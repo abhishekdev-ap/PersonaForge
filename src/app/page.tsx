@@ -6,7 +6,6 @@ import {
   Sparkles,
   Globe,
   FileText,
-  ArrowRight,
   ArrowLeft,
   Copy,
   Download,
@@ -14,7 +13,6 @@ import {
   Loader2,
   User,
   Building2,
-  Zap,
   AlertCircle,
   RefreshCw,
   Mail,
@@ -25,7 +23,7 @@ import {
   Repeat2,
   Bookmark,
   MoreHorizontal,
-  ExternalLink,
+  FileDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,6 +58,15 @@ interface Persona {
   values?: string[];
   [key: string]: unknown;
 }
+
+// ─── Agent route mapping ─────────────────────────────────────────────────────
+
+const AGENT_ROUTES: Record<ContentType, string> = {
+  'landing-page': '/api/agents/landing-page',
+  'cold-emails': '/api/agents/cold-emails',
+  'marketing-copy': '/api/agents/marketing-copy',
+  'linkedin-post': '/api/agents/linkedin-post',
+};
 
 // ─── Step Indicator ──────────────────────────────────────────────────────────
 
@@ -135,20 +142,14 @@ function LandingPagePreview({ data }: { data: Record<string, unknown> }) {
       {hero && (
         <div className="relative px-6 py-20 text-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-emerald-950/30 dark:via-zinc-950 dark:to-teal-950/30">
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 leading-tight">
-              {hero.headline}
-            </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              {hero.subheadline}
-            </p>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 leading-tight">{hero.headline}</h1>
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">{hero.subheadline}</p>
             <div className="flex items-center justify-center gap-3">
               <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white text-base px-8">
                 {hero.cta_text}
               </Button>
               {hero.cta_secondary && (
-                <Button size="lg" variant="outline" className="text-base px-8">
-                  {hero.cta_secondary}
-                </Button>
+                <Button size="lg" variant="outline" className="text-base px-8">{hero.cta_secondary}</Button>
               )}
             </div>
           </div>
@@ -239,36 +240,33 @@ function LandingPagePreview({ data }: { data: Record<string, unknown> }) {
 // ─── Cold Email Cards ───────────────────────────────────────────────────────
 
 function ColdEmailCards({ emails }: { emails: Record<string, unknown>[] }) {
-  const targetColors: Record<string, { bg: string; border: string; text: string }> = {
-    investor: { bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-700 dark:text-amber-400' },
-    customer: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-700 dark:text-emerald-400' },
-    partner: { bg: 'bg-violet-50 dark:bg-violet-950/30', border: 'border-violet-200 dark:border-violet-800', text: 'text-violet-700 dark:text-violet-400' },
+  const targetStyles: Record<string, { bg: string; border: string; text: string; icon: string; label: string }> = {
+    investor: { bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-300 dark:border-amber-700', text: 'text-amber-700 dark:text-amber-400', icon: '💰', label: 'Investor' },
+    customer: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-emerald-300 dark:border-emerald-700', text: 'text-emerald-700 dark:text-emerald-400', icon: '🎯', label: 'Customer' },
+    partner: { bg: 'bg-violet-50 dark:bg-violet-950/30', border: 'border-violet-300 dark:border-violet-700', text: 'text-violet-700 dark:text-violet-400', icon: '🤝', label: 'Partner' },
   };
 
   return (
     <div className="space-y-6">
       {emails.map((email, i) => {
         const tType = String(email.target_type || 'customer');
-        const colors = targetColors[tType] || targetColors.customer;
+        const style = targetStyles[tType] || targetStyles.customer;
 
         return (
-          <Card key={i} className={`border-2 ${colors.border} ${colors.bg} overflow-hidden`}>
+          <Card key={i} className={`border-2 ${style.border} ${style.bg} overflow-hidden`}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                  <Badge className={`${colors.bg} ${colors.text} border ${colors.border} mb-2`}>
-                    {tType === 'investor' ? '💰 Investor' : tType === 'partner' ? '🤝 Partner' : '🎯 Customer'}
+                  <Badge className={`${style.bg} ${style.text} border ${style.border} mb-2 text-sm`}>
+                    {style.icon} {style.label} Outreach
                   </Badge>
                   <CardTitle className="text-lg">{String(email.target_persona)}</CardTitle>
-                  <CardDescription className="mt-1">
-                    From: {String(email.sender_title || 'Company Rep')}
-                  </CardDescription>
+                  <CardDescription className="mt-1">From: {String(email.sender_title || 'Company Rep')}</CardDescription>
                 </div>
-                <Mail className={`w-8 h-8 ${colors.text} opacity-30`} />
+                <Mail className={`w-8 h-8 ${style.text} opacity-30`} />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Subject & Preview */}
               <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 border space-y-2">
                 <div className="flex items-start gap-2">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Subject:</span>
@@ -279,18 +277,14 @@ function ColdEmailCards({ emails }: { emails: Record<string, unknown>[] }) {
                   <span className="text-sm text-muted-foreground">{String(email.preview_text)}</span>
                 </div>
               </div>
-
-              {/* Email body */}
               <div className="space-y-3 text-sm leading-relaxed">
-                <p>{String(email.greeting)}</p>
-                <p className="font-medium">{String(email.opening)}</p>
+                <p className="font-medium">{String(email.greeting)}</p>
+                <p>{String(email.opening)}</p>
                 <p className="whitespace-pre-wrap">{String(email.body)}</p>
               </div>
-
-              {/* CTA */}
               <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 border">
-                <p className="text-sm mb-1">{String(email.cta)}</p>
-                <p className="text-sm text-muted-foreground">{String(email.sign_off)}</p>
+                <p className="text-sm font-medium">{String(email.cta)}</p>
+                <p className="text-sm text-muted-foreground mt-1">{String(email.sign_off)}</p>
               </div>
             </CardContent>
           </Card>
@@ -300,9 +294,17 @@ function ColdEmailCards({ emails }: { emails: Record<string, unknown>[] }) {
   );
 }
 
-// ─── Marketing Copy ──────────────────────────────────────────────────────────
+// ─── Marketing Copy Cards ────────────────────────────────────────────────────
 
-function MarketingCopyCards({ copies }: { copies: Record<string, unknown>[] }) {
+function MarketingCopyCards({
+  copies,
+  persona,
+  onDownloadPdf,
+}: {
+  copies: Record<string, unknown>[];
+  persona: Persona | null;
+  onDownloadPdf: () => void;
+}) {
   return (
     <div className="space-y-8">
       {copies.map((copy, i) => {
@@ -312,14 +314,28 @@ function MarketingCopyCards({ copies }: { copies: Record<string, unknown>[] }) {
         return (
           <Card key={i} className="border-2 overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 pb-4">
-              <Badge variant="outline" className="w-fit mb-2">Variant {i + 1}</Badge>
-              <CardTitle className="text-2xl">{String(copy.title)}</CardTitle>
-              <CardDescription className="text-base mt-1">
-                <span className="font-medium text-emerald-700 dark:text-emerald-400">Angle:</span> {String(copy.angle)}
-              </CardDescription>
-              <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mt-2">
-                &ldquo;{String(copy.tagline)}&rdquo;
-              </p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <Badge variant="outline" className="w-fit mb-2">Variant {i + 1}</Badge>
+                  <CardTitle className="text-2xl">{String(copy.title)}</CardTitle>
+                  <CardDescription className="text-base mt-1">
+                    <span className="font-medium text-emerald-700 dark:text-emerald-400">Angle:</span> {String(copy.angle)}
+                  </CardDescription>
+                  <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mt-2">
+                    &ldquo;{String(copy.tagline)}&rdquo;
+                  </p>
+                </div>
+                {i === 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 shrink-0"
+                    onClick={onDownloadPdf}
+                  >
+                    <FileDown className="w-4 h-4" /> Download PDF
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-6 pt-4">
               {/* Executive Summary */}
@@ -342,9 +358,7 @@ function MarketingCopyCards({ copies }: { copies: Record<string, unknown>[] }) {
                           <div>
                             <p className="font-semibold">{f.name}</p>
                             <p className="text-sm text-muted-foreground mt-0.5">{f.description}</p>
-                            <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1 font-medium">
-                              Benefit: {f.benefit}
-                            </p>
+                            <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1 font-medium">Benefit: {f.benefit}</p>
                           </div>
                         </div>
                       </div>
@@ -369,7 +383,6 @@ function MarketingCopyCards({ copies }: { copies: Record<string, unknown>[] }) {
                 </div>
               )}
 
-              {/* Closing */}
               <div className="bg-muted/50 p-4 rounded-lg">
                 <p className="text-sm leading-relaxed font-medium">{String(copy.closing_statement)}</p>
               </div>
@@ -386,86 +399,112 @@ function MarketingCopyCards({ copies }: { copies: Record<string, unknown>[] }) {
 function LinkedInPostPreview({ post }: { post: Record<string, unknown> }) {
   return (
     <div className="max-w-2xl mx-auto">
-      <Card className="overflow-hidden border-2 border-zinc-200 dark:border-zinc-700">
+      <Card className="overflow-hidden border border-[#E0E0E0] dark:border-zinc-700 rounded-xl" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
         {/* LinkedIn Header */}
-        <div className="px-5 py-4 flex items-center gap-3 border-b bg-white dark:bg-zinc-900">
-          <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-lg">
+        <div className="px-4 py-3 flex items-center gap-2.5 bg-white dark:bg-[#1B1F23]">
+          {/* Avatar */}
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0"
+            style={{ backgroundColor: '#0a66c2' }}
+          >
             {String(post.author_name || 'U')[0].toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-[15px] flex items-center gap-1">
+            <p className="font-semibold text-[15px] text-[#000000] dark:text-white leading-tight flex items-center gap-1">
               {String(post.author_name || 'Author')}
-              <span className="text-xs text-muted-foreground">· 1st</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" width="16" height="16" className="shrink-0">
+                <circle cx="11" cy="11" r="11" fill="#0a66c2" />
+                <path d="M9.5 15l-3.5-3.5 1-1L9.5 13l6-6 1 1z" fill="white" />
+              </svg>
             </p>
-            <p className="text-xs text-muted-foreground truncate">{String(post.author_headline || post.author_role || '')}</p>
-            <p className="text-xs text-muted-foreground">Just now · 🌐</p>
+            <p className="text-[13px] text-[#666666] dark:text-zinc-400 truncate leading-tight">
+              {String(post.author_headline || post.author_role || '')}
+            </p>
+            <p className="text-[12px] text-[#666666] dark:text-zinc-500 leading-tight">
+              {String(post.author_role || '')} · <span className="text-[#666666] dark:text-zinc-500">Just now</span> ·
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" className="inline ml-0.5" fill="#666666">
+                <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 12.5a5.5 5.5 0 110-11 5.5 5.5 0 010 11zM8 4a.75.75 0 00-.75.75v3.5a.75.75 0 001.5 0v-3.5A.75.75 0 008 4zm0 6a1 1 0 100 2 1 1 0 000-2z" />
+              </svg>
+            </p>
           </div>
-          <MoreHorizontal className="w-5 h-5 text-muted-foreground shrink-0" />
+          <button className="p-1.5 rounded-full hover:bg-[#E8E8E8] dark:hover:bg-zinc-700 transition-colors">
+            <MoreHorizontal className="w-5 h-5 text-[#666666] dark:text-zinc-400" />
+          </button>
         </div>
 
         {/* Content */}
-        <div className="px-5 py-4 bg-white dark:bg-zinc-900">
-          <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{String(post.content || '')}</p>
+        <div className="px-4 py-3 bg-white dark:bg-[#1B1F23]">
+          <p className="text-[15px] leading-[1.6] text-[#000000] dark:text-white whitespace-pre-wrap">
+            {String(post.content || '')}
+          </p>
         </div>
 
         {/* Hashtags */}
-        <div className="px-5 pb-2 bg-white dark:bg-zinc-900">
-          <div className="flex flex-wrap gap-1">
+        <div className="px-4 pb-2 bg-white dark:bg-[#1B1F23]">
+          <div className="flex flex-wrap gap-x-1.5">
             {((post.hashtags || []) as string[]).map((tag, i) => (
-              <span key={i} className="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+              <span
+                key={i}
+                className="text-[15px] font-medium hover:underline cursor-pointer"
+                style={{ color: '#0a66c2' }}
+              >
                 #{tag.replace(/^#/, '')}
               </span>
             ))}
           </div>
         </div>
 
-        {/* Engagement bar */}
-        <div className="px-5 py-2 border-t border-b bg-white dark:bg-zinc-900">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>👍 ❤️ 142</span>
+        {/* Engagement counts */}
+        <div className="px-4 py-1.5 border-t border-[#E0E0E0] dark:border-zinc-700 bg-white dark:bg-[#1B1F23]">
+          <div className="flex items-center justify-between text-[13px] text-[#666666] dark:text-zinc-400">
+            <div className="flex items-center gap-1">
+              <span className="flex -space-x-0.5">
+                <span className="w-4 h-4 rounded-full bg-[#0a66c2] flex items-center justify-center">
+                  <svg width="8" height="8" viewBox="0 0 10 10" fill="white"><path d="M5 0l1.5 3H10L7.5 5l1 3.5L5 6.5 1.5 8.5l1-3.5L0 3h3.5z" /></svg>
+                </span>
+                <span className="w-4 h-4 rounded-full bg-[#e16745] flex items-center justify-center">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="white"><path d="M6 10.5l-5-5h3V1h4v4.5h3z" /></svg>
+                </span>
+              </span>
+              <span>142</span>
+            </div>
             <span>23 comments · 8 reposts</span>
           </div>
         </div>
 
+        {/* Divider */}
+        <div className="h-px bg-[#E0E0E0] dark:bg-zinc-700" />
+
         {/* Action buttons */}
-        <div className="grid grid-cols-4 border-b bg-white dark:bg-zinc-900">
+        <div className="grid grid-cols-4 bg-white dark:bg-[#1B1F23]">
           {[
-            { icon: <ThumbsUp className="w-5 h-5" />, label: 'Like' },
-            { icon: <MessageSquare className="w-5 h-5" />, label: 'Comment' },
-            { icon: <Repeat2 className="w-5 h-5" />, label: 'Repost' },
-            { icon: <Bookmark className="w-5 h-5" />, label: 'Save' },
+            { icon: <ThumbsUp className="w-5 h-5" />, label: 'Like', activeColor: '#0a66c2' },
+            { icon: <MessageSquare className="w-5 h-5" />, label: 'Comment', activeColor: '#0a66c2' },
+            { icon: <Repeat2 className="w-5 h-5" />, label: 'Repost', activeColor: '#0a66c2' },
+            { icon: <Bookmark className="w-5 h-5" />, label: 'Save', activeColor: '#0a66c2' },
           ].map((action, i) => (
             <button
               key={i}
-              className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+              className="flex items-center justify-center gap-2 py-2.5 text-[14px] font-medium text-[#666666] dark:text-zinc-400 hover:bg-[#E8E8E8] dark:hover:bg-zinc-700 transition-colors"
             >
-              {action.icon}
+              <span style={{ color: action.activeColor }}>{action.icon}</span>
               <span className="hidden sm:inline">{action.label}</span>
             </button>
           ))}
         </div>
 
-        {/* CTA note */}
-        <div className="px-5 py-3 bg-muted/30">
-          <p className="text-xs text-muted-foreground">
-            <span className="font-semibold">Call to Action:</span> {String(post.call_to_action || '')}
+        {/* CTA info bar */}
+        <div className="px-4 py-2.5 bg-[#F3F2EF] dark:bg-zinc-800 border-t border-[#E0E0E0] dark:border-zinc-700">
+          <p className="text-[12px] text-[#666666] dark:text-zinc-400">
+            <span className="font-semibold text-[#000000] dark:text-white">Call to Action:</span> {String(post.call_to_action || '')}
           </p>
-          <p className="text-xs text-muted-foreground">
-            <span className="font-semibold">Read Time:</span> {String(post.estimated_read_time || '~1 min')}
+          <p className="text-[12px] text-[#666666] dark:text-zinc-400 mt-0.5">
+            <span className="font-semibold text-[#000000] dark:text-white">Read Time:</span> {String(post.estimated_read_time || '~1 min')}
           </p>
         </div>
       </Card>
     </div>
   );
-}
-
-// ─── Format Key Helper ───────────────────────────────────────────────────────
-
-function formatKey(key: string): string {
-  return key
-    .split(/[_-]/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
 }
 
 // ─── Main App ────────────────────────────────────────────────────────────────
@@ -515,16 +554,17 @@ export default function Home() {
     }
   }, [inputMode, url, pastedText]);
 
-  // Step 2 → 3/4: Generate Content
+  // Step 2 → 3/4: Generate Content via specialized agent
   const handleGenerate = useCallback(async () => {
     setLoading(true);
     setError('');
     setStep('generate');
     try {
-      const genRes = await fetch('/api/generate', {
+      const agentRoute = AGENT_ROUTES[contentType];
+      const genRes = await fetch(agentRoute, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ persona, contentType, brief }),
+        body: JSON.stringify({ persona, brief }),
       });
       const genData = await genRes.json();
       if (!genData.success) throw new Error(genData.error);
@@ -538,7 +578,44 @@ export default function Home() {
     }
   }, [persona, contentType, brief]);
 
-  // Export
+  // PDF Download for Marketing Copy
+  const handleDownloadPdf = useCallback(async () => {
+    if (!generatedData || !persona) return;
+    try {
+      const res = await fetch('/api/agents/marketing-copy/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          copies: generatedData.copies,
+          persona,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'PDF generation failed');
+      }
+
+      const blob = await res.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `marketing-copy-${(persona.name || 'company').replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+      toast({ title: 'PDF downloaded!' });
+    } catch (err: unknown) {
+      toast({
+        title: 'PDF download failed',
+        description: err instanceof Error ? err.message : '',
+        variant: 'destructive',
+      });
+    }
+  }, [generatedData, persona]);
+
+  // Export as text/md/json
   const handleExport = useCallback(
     async (format: string) => {
       if (!generatedData) return;
@@ -546,16 +623,10 @@ export default function Home() {
         const res = await fetch('/api/export', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            variants: generatedData,
-            persona,
-            contentType,
-            format,
-          }),
+          body: JSON.stringify({ variants: generatedData, persona, contentType, format }),
         });
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
-
         const blob = new Blob([data.content], { type: data.mimeType });
         const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -567,37 +638,29 @@ export default function Home() {
         URL.revokeObjectURL(downloadUrl);
         toast({ title: 'Exported successfully!' });
       } catch (err: unknown) {
-        toast({
-          title: 'Export failed',
-          description: err instanceof Error ? err.message : '',
-          variant: 'destructive',
-        });
+        toast({ title: 'Export failed', description: err instanceof Error ? err.message : '', variant: 'destructive' });
       }
     },
     [generatedData, persona, contentType]
   );
 
-  // Copy handler
   const handleCopy = useCallback(async (text: string) => {
     await navigator.clipboard.writeText(text);
     toast({ title: 'Copied to clipboard!' });
   }, []);
 
-  // Regenerate
   const handleRegenerate = useCallback(() => {
     setGeneratedData(null);
     handleGenerate();
   }, [handleGenerate]);
 
-  // Content type options
   const contentTypes: { value: ContentType; label: string; icon: React.ReactNode; desc: string }[] = [
     { value: 'landing-page', label: 'Landing Page', icon: <Layout className="w-5 h-5" />, desc: 'Full website landing page' },
     { value: 'cold-emails', label: 'Cold Emails', icon: <Mail className="w-5 h-5" />, desc: '3 emails: investor, customer, partner' },
-    { value: 'marketing-copy', label: 'Marketing Copy', icon: <FileText className="w-5 h-5" />, desc: 'Features, USPs, download-ready' },
+    { value: 'marketing-copy', label: 'Marketing Copy', icon: <FileText className="w-5 h-5" />, desc: '3 variants + PDF download' },
     { value: 'linkedin-post', label: 'LinkedIn Post', icon: <Linkedin className="w-5 h-5" />, desc: 'Authentic company post' },
   ];
 
-  // Get the content label for export
   const getContentLabel = () => contentTypes.find((c) => c.value === contentType)?.label || contentType;
 
   return (
@@ -615,36 +678,23 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
         <StepIndicator current={step} />
 
         <AnimatePresence mode="wait">
           {/* ── STEP 1: Input ─────────────────────────────── */}
           {step === 'input' && (
-            <motion.div
-              key="input"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
+            <motion.div key="input" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
               <Card className="max-w-2xl mx-auto">
                 <CardHeader>
                   <CardTitle className="text-2xl">Who are we writing for?</CardTitle>
-                  <CardDescription>
-                    Paste a company description, LinkedIn bio, or enter a company website URL. We&apos;ll extract identity signals and build a persona.
-                  </CardDescription>
+                  <CardDescription>Paste a company description, LinkedIn bio, or enter a company website URL.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as InputMode)}>
                     <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="text" className="gap-2">
-                        <FileText className="w-4 h-4" /> Paste Text
-                      </TabsTrigger>
-                      <TabsTrigger value="url" className="gap-2">
-                        <Globe className="w-4 h-4" /> Company URL
-                      </TabsTrigger>
+                      <TabsTrigger value="text" className="gap-2"><FileText className="w-4 h-4" /> Paste Text</TabsTrigger>
+                      <TabsTrigger value="url" className="gap-2"><Globe className="w-4 h-4" /> Company URL</TabsTrigger>
                     </TabsList>
                     <TabsContent value="text" className="mt-4">
                       <Textarea
@@ -653,26 +703,15 @@ export default function Home() {
                         value={pastedText}
                         onChange={(e) => setPastedText(e.target.value)}
                       />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Tip: Include company name, industry, products, target audience for best results.
-                      </p>
                     </TabsContent>
                     <TabsContent value="url" className="mt-4">
-                      <Input
-                        placeholder="https://example.com or example.com"
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        We&apos;ll scrape the public website to extract company info.
-                      </p>
+                      <Input placeholder="https://example.com or example.com" value={url} onChange={(e) => setUrl(e.target.value)} />
                     </TabsContent>
                   </Tabs>
 
                   {error && (
                     <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      {error}
+                      <AlertCircle className="w-4 h-4 shrink-0" />{error}
                     </div>
                   )}
 
@@ -682,11 +721,7 @@ export default function Home() {
                     onClick={handleExtractAndPersona}
                     disabled={loading || (inputMode === 'text' ? !pastedText.trim() : !url.trim())}
                   >
-                    {loading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                     {loading ? 'Extracting & Building Persona...' : 'Extract & Build Persona'}
                   </Button>
                 </CardContent>
@@ -696,23 +731,13 @@ export default function Home() {
 
           {/* ── STEP 2: Persona ───────────────────────────── */}
           {step === 'persona' && persona && (
-            <motion.div
-              key="persona"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
+            <motion.div key="persona" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
               <Card className="max-w-2xl mx-auto">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-2xl flex items-center gap-2">
-                        {persona.type === 'individual' ? (
-                          <User className="w-6 h-6 text-emerald-600" />
-                        ) : (
-                          <Building2 className="w-6 h-6 text-emerald-600" />
-                        )}
+                        {persona.type === 'individual' ? <User className="w-6 h-6 text-emerald-600" /> : <Building2 className="w-6 h-6 text-emerald-600" />}
                         {persona.name || 'Persona'}
                       </CardTitle>
                       <CardDescription className="mt-1">
@@ -721,13 +746,10 @@ export default function Home() {
                           : `${persona.industry || 'Company'} · ${persona.size || ''}`}
                       </CardDescription>
                     </div>
-                    <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                      {persona.type}
-                    </Badge>
+                    <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">{persona.type}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  {/* Summary */}
                   {persona.summary && (
                     <div className="bg-muted/50 p-4 rounded-lg">
                       <p className="text-sm font-medium text-muted-foreground mb-1">Summary</p>
@@ -735,87 +757,28 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Key attributes */}
                   <div className="grid grid-cols-2 gap-4">
-                    {persona.industry && (
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Industry</p>
-                        <p className="text-sm font-medium mt-0.5">{persona.industry}</p>
-                      </div>
-                    )}
-                    {persona.seniority && (
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Seniority</p>
-                        <p className="text-sm font-medium mt-0.5 capitalize">{persona.seniority}</p>
-                      </div>
-                    )}
-                    {persona.size && (
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Company Size</p>
-                        <p className="text-sm font-medium mt-0.5 capitalize">{persona.size}</p>
-                      </div>
-                    )}
-                    {(persona.tone_preference || persona.tone) && (
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tone</p>
-                        <p className="text-sm font-medium mt-0.5 capitalize">
-                          {persona.tone_preference || persona.tone}
-                        </p>
-                      </div>
-                    )}
-                    {persona.target_audience && (
-                      <div className="col-span-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Target Audience</p>
-                        <p className="text-sm font-medium mt-0.5">{persona.target_audience}</p>
-                      </div>
-                    )}
+                    {persona.industry && (<div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Industry</p><p className="text-sm font-medium mt-0.5">{persona.industry}</p></div>)}
+                    {persona.size && (<div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Company Size</p><p className="text-sm font-medium mt-0.5 capitalize">{persona.size}</p></div>)}
+                    {(persona.tone_preference || persona.tone) && (<div><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tone</p><p className="text-sm font-medium mt-0.5 capitalize">{persona.tone_preference || persona.tone}</p></div>)}
+                    {persona.target_audience && (<div className="col-span-2"><p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Target Audience</p><p className="text-sm font-medium mt-0.5">{persona.target_audience}</p></div>)}
                   </div>
 
-                  {/* Skills/Offerings */}
-                  {persona.skills && persona.skills.length > 0 && (
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Skills & Expertise</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {persona.skills.map((skill, i) => (
-                          <Badge key={i} variant="secondary">{skill}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   {persona.offerings && persona.offerings.length > 0 && (
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Offerings</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {persona.offerings.map((item, i) => (
-                          <Badge key={i} variant="secondary">{item}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {persona.interests && persona.interests.length > 0 && (
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Interests</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {persona.interests.map((item, i) => (
-                          <Badge key={i} variant="outline">{item}</Badge>
-                        ))}
-                      </div>
+                      <div className="flex flex-wrap gap-1.5">{persona.offerings.map((item, i) => <Badge key={i} variant="secondary">{item}</Badge>)}</div>
                     </div>
                   )}
                   {persona.values && persona.values.length > 0 && (
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Brand Values</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {persona.values.map((item, i) => (
-                          <Badge key={i} variant="outline">{item}</Badge>
-                        ))}
-                      </div>
+                      <div className="flex flex-wrap gap-1.5">{persona.values.map((item, i) => <Badge key={i} variant="outline">{item}</Badge>)}</div>
                     </div>
                   )}
 
                   <Separator />
 
-                  {/* Content type selection */}
                   <div>
                     <p className="text-sm font-semibold mb-3">What do you want to generate?</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -824,64 +787,31 @@ export default function Home() {
                           key={ct.value}
                           onClick={() => setContentType(ct.value)}
                           className={`flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-all ${
-                            contentType === ct.value
-                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
-                              : 'border-muted hover:border-muted-foreground/30'
+                            contentType === ct.value ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-muted hover:border-muted-foreground/30'
                           }`}
                         >
-                          <div
-                            className={`p-2 rounded-lg ${
-                              contentType === ct.value
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-muted text-muted-foreground'
-                            }`}
-                          >
-                            {ct.icon}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">{ct.label}</p>
-                            <p className="text-xs text-muted-foreground">{ct.desc}</p>
-                          </div>
+                          <div className={`p-2 rounded-lg ${contentType === ct.value ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'}`}>{ct.icon}</div>
+                          <div><p className="text-sm font-medium">{ct.label}</p><p className="text-xs text-muted-foreground">{ct.desc}</p></div>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Optional brief */}
                   <div>
-                    <p className="text-sm font-semibold mb-2">
-                      Content Brief <span className="text-muted-foreground font-normal">(optional)</span>
-                    </p>
-                    <Textarea
-                      placeholder="Any specific instructions? e.g., 'Focus on enterprise customers' or 'Emphasize the AI-powered features'..."
-                      className="min-h-[80px] resize-y"
-                      value={brief}
-                      onChange={(e) => setBrief(e.target.value)}
-                    />
+                    <p className="text-sm font-semibold mb-2">Content Brief <span className="text-muted-foreground font-normal">(optional)</span></p>
+                    <Textarea placeholder="Any specific instructions?" className="min-h-[80px] resize-y" value={brief} onChange={(e) => setBrief(e.target.value)} />
                   </div>
 
                   {error && (
                     <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-lg">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      {error}
+                      <AlertCircle className="w-4 h-4 shrink-0" />{error}
                     </div>
                   )}
 
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setStep('input')} className="gap-2">
-                      <ArrowLeft className="w-4 h-4" /> Back
-                    </Button>
-                    <Button
-                      size="lg"
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 gap-2"
-                      onClick={handleGenerate}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-4 h-4" />
-                      )}
+                    <Button variant="outline" onClick={() => setStep('input')} className="gap-2"><ArrowLeft className="w-4 h-4" /> Back</Button>
+                    <Button size="lg" className="flex-1 bg-emerald-600 hover:bg-emerald-700 gap-2" onClick={handleGenerate} disabled={loading}>
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                       {loading ? 'Generating...' : `Generate ${getContentLabel()}`}
                     </Button>
                   </div>
@@ -890,16 +820,10 @@ export default function Home() {
             </motion.div>
           )}
 
-          {/* ── STEP 3: Generating (intermediate) ─────────── */}
+          {/* ── STEP 3: Loading ───────────────────────────── */}
           {step === 'generate' && (
-            <motion.div
-              key="generate"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="flex flex-col items-center justify-center py-20 gap-4"
-            >
+            <motion.div key="generate" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}
+              className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
               <p className="text-lg font-medium">Generating your {getContentLabel().toLowerCase()}...</p>
               <p className="text-sm text-muted-foreground">This usually takes 5-15 seconds</p>
@@ -908,103 +832,54 @@ export default function Home() {
 
           {/* ── STEP 4: Output ────────────────────────────── */}
           {step === 'output' && generatedData && (
-            <motion.div
-              key="output"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
+            <motion.div key="output" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
               {/* Persona summary bar */}
               <div className="flex items-center justify-between mb-6 bg-muted/50 p-3 rounded-xl">
                 <div className="flex items-center gap-3">
-                  {persona?.type === 'individual' ? (
-                    <User className="w-5 h-5 text-emerald-600" />
-                  ) : (
-                    <Building2 className="w-5 h-5 text-emerald-600" />
-                  )}
+                  {persona?.type === 'individual' ? <User className="w-5 h-5 text-emerald-600" /> : <Building2 className="w-5 h-5 text-emerald-600" />}
                   <div>
                     <p className="text-sm font-semibold">{persona?.name || 'Persona'}</p>
                     <p className="text-xs text-muted-foreground">{getContentLabel()}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="gap-1.5" onClick={handleRegenerate}>
-                    <RefreshCw className="w-3.5 h-3.5" /> Regenerate
-                  </Button>
-                </div>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={handleRegenerate}>
+                  <RefreshCw className="w-3.5 h-3.5" /> Regenerate
+                </Button>
               </div>
 
               {/* ── Landing Page Output ─────────────── */}
-              {contentType === 'landing-page' && generatedData.hero && (
-                <div className="space-y-4">
-                  <LandingPagePreview data={generatedData} />
-                  <div className="flex justify-center">
-                    <Button
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => handleCopy(JSON.stringify(generatedData, null, 2))}
-                    >
-                      <Copy className="w-4 h-4" /> Copy Page JSON
-                    </Button>
-                  </div>
-                </div>
-              )}
+              {contentType === 'landing-page' && generatedData.hero && <LandingPagePreview data={generatedData} />}
 
               {/* ── Cold Emails Output ──────────────── */}
-              {contentType === 'cold-emails' && generatedData.emails && (
-                <ColdEmailCards emails={generatedData.emails as Record<string, unknown>[]} />
-              )}
+              {contentType === 'cold-emails' && generatedData.emails && <ColdEmailCards emails={generatedData.emails as Record<string, unknown>[]} />}
 
               {/* ── Marketing Copy Output ───────────── */}
               {contentType === 'marketing-copy' && generatedData.copies && (
-                <MarketingCopyCards copies={generatedData.copies as Record<string, unknown>[]} />
+                <MarketingCopyCards copies={generatedData.copies as Record<string, unknown>[]} persona={persona} onDownloadPdf={handleDownloadPdf} />
               )}
 
               {/* ── LinkedIn Post Output ─────────────── */}
-              {contentType === 'linkedin-post' && generatedData.post && (
-                <LinkedInPostPreview post={generatedData.post as Record<string, unknown>} />
-              )}
+              {contentType === 'linkedin-post' && generatedData.post && <LinkedInPostPreview post={generatedData.post as Record<string, unknown>} />}
 
               {/* Actions bar */}
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50 p-4 rounded-xl">
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setStep('persona')}>
+                  <ArrowLeft className="w-3.5 h-3.5" /> Edit Persona
+                </Button>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setStep('persona')}>
-                    <ArrowLeft className="w-3.5 h-3.5" /> Edit Persona
-                  </Button>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => handleCopy(JSON.stringify(generatedData, null, 2))}
-                  >
+                  {contentType === 'marketing-copy' && (
+                    <Button size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleDownloadPdf}>
+                      <FileDown className="w-3.5 h-3.5" /> Download PDF
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleCopy(JSON.stringify(generatedData, null, 2))}>
                     <Copy className="w-3.5 h-3.5" /> Copy JSON
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => handleExport('md')}
-                  >
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('md')}>
                     <Download className="w-3.5 h-3.5" /> .md
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => handleExport('txt')}
-                  >
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('txt')}>
                     <Download className="w-3.5 h-3.5" /> .txt
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => handleExport('json')}
-                  >
-                    <Download className="w-3.5 h-3.5" /> .json
                   </Button>
                 </div>
               </div>
