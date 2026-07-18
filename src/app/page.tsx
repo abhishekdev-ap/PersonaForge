@@ -761,7 +761,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t py-4 mt-auto">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between text-xs text-muted-foreground">
-          <span>PersonaForge — Powered by Groq LLM</span>
+          <span>PersonaForge — AI-Powered Content Engine</span>
           <span>No data stored · Stateless pipeline</span>
         </div>
       </footer>

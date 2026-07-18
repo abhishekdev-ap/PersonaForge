@@ -1,14 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-
-const MODELS = [
-  'llama-3.3-70b-versatile',
-  'llama-3.1-8b-instant',
-  'gemma2-9b-it',
-  'mixtral-8x7b-32768',
-];
-
 const CONTENT_GENERATION_PROMPTS: Record<string, string> = {
   'marketing-copy': `You are an expert marketing copywriter. Given the following persona and content brief, generate 3 distinct marketing copy variants. Each variant should have a different angle or hook but all should be tailored to the persona.
 
@@ -80,60 +71,6 @@ Return ONLY valid JSON (no markdown, no code blocks, no backticks) with this str
 }`,
 };
 
-async function callGroq(apiKey: string, prompt: string, userInput: string): Promise<string> {
-  let lastError = '';
-
-  for (const model of MODELS) {
-    try {
-      const response = await fetch(GROQ_API_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: prompt },
-            { role: 'user', content: userInput },
-          ],
-          temperature: 0.7,
-          max_tokens: 2048,
-          response_format: { type: 'json_object' },
-        }),
-      });
-
-      if (response.status === 403) {
-        throw new Error(
-          'Groq API returned 403 Forbidden. Your API key may be invalid, expired, or not yet activated. Please verify at console.groq.com'
-        );
-      }
-
-      if (response.status === 429) {
-        console.warn(`Groq rate limited on model ${model}, trying next...`);
-        lastError = 'Rate limited — all models busy. Please try again in a moment.';
-        continue;
-      }
-
-      if (!response.ok) {
-        const errBody = await response.text();
-        console.error(`Groq API error (model: ${model}):`, errBody);
-        lastError = `Groq API error: ${response.status}`;
-        continue;
-      }
-
-      const data = await response.json();
-      return data.choices?.[0]?.message?.content || '';
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes('403 Forbidden')) throw err;
-      lastError = err instanceof Error ? err.message : 'Unknown error';
-      continue;
-    }
-  }
-
-  throw new Error(lastError || 'All Groq models failed');
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -143,18 +80,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Persona and content type are required' },
         { status: 400 }
-      );
-    }
-
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey || apiKey === 'your_groq_api_key_here') {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            'GROQ_API_KEY is not configured. Please add your key to the .env file and restart the server.',
-        },
-        { status: 500 }
       );
     }
 
@@ -173,7 +98,20 @@ ${brief ? `CONTENT BRIEF:\n${brief}` : 'Generate the best possible content for t
 
 Generate 3 distinct content variants now. Remember: return ONLY valid JSON.`;
 
-    const content = await callGroq(apiKey, systemPrompt, userMessage);
+    // Use z-ai-web-dev-sdk (no API key needed — built-in LLM access)
+    const ZAI = (await import('z-ai-web-dev-sdk')).default;
+    const zai = await ZAI.create();
+
+    const completion = await zai.chat.completions.create({
+      messages: [
+        { role: 'assistant', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      temperature: 0.7,
+      max_tokens: 2048,
+    });
+
+    const content = completion.choices?.[0]?.message?.content || '';
 
     let result;
     try {
