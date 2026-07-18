@@ -82,17 +82,8 @@ Generate a complete, high-converting landing page now. Return ONLY valid JSON.`;
 
     const content = completion.choices?.[0]?.message?.content || '';
 
-    let result;
-    try {
-      result = JSON.parse(content);
-    } catch {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('Could not parse landing page JSON from LLM response');
-      }
-    }
+    const { parseLlmJson } = await import('@/lib/llm-json');
+    const result = parseLlmJson(content);
 
     return NextResponse.json({ success: true, ...result });
   } catch (error: unknown) {

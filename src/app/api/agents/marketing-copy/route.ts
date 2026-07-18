@@ -70,17 +70,8 @@ Generate 3 complete marketing copy variants covering all features and USPs. Retu
 
     const content = completion.choices?.[0]?.message?.content || '';
 
-    let result;
-    try {
-      result = JSON.parse(content);
-    } catch {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('Could not parse marketing copy JSON from LLM response');
-      }
-    }
+    const { parseLlmJson } = await import('@/lib/llm-json');
+    const result = parseLlmJson(content);
 
     return NextResponse.json({ success: true, ...result });
   } catch (error: unknown) {
