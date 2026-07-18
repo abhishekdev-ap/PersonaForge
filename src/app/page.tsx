@@ -6,7 +6,6 @@ import {
   Sparkles,
   Globe,
   FileText,
-  Upload,
   ArrowRight,
   ArrowLeft,
   Copy,
@@ -18,6 +17,15 @@ import {
   Zap,
   AlertCircle,
   RefreshCw,
+  Mail,
+  Linkedin,
+  Layout,
+  MessageSquare,
+  ThumbsUp,
+  Repeat2,
+  Bookmark,
+  MoreHorizontal,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,12 +39,11 @@ import { toast } from '@/hooks/use-toast';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type InputMode = 'text' | 'url';
-type PersonaType = 'individual' | 'company';
-type ContentType = 'marketing-copy' | 'landing-page' | 'ui-microcopy' | 'email-sequence';
+type ContentType = 'landing-page' | 'cold-emails' | 'marketing-copy' | 'linkedin-post';
 type Step = 'input' | 'persona' | 'generate' | 'output';
 
 interface Persona {
-  type: PersonaType;
+  type: string;
   name: string;
   role?: string;
   industry?: string;
@@ -51,11 +58,6 @@ interface Persona {
   offerings?: string[];
   tone?: string;
   values?: string[];
-}
-
-interface ContentVariant {
-  title: string;
-  angle: string;
   [key: string]: unknown;
 }
 
@@ -68,7 +70,6 @@ function StepIndicator({ current }: { current: Step }) {
     { key: 'generate', label: 'Generate', num: 3 },
     { key: 'output', label: 'Output', num: 4 },
   ];
-
   const currentIndex = steps.findIndex((s) => s.key === current);
 
   return (
@@ -100,86 +101,365 @@ function StepIndicator({ current }: { current: Step }) {
   );
 }
 
-// ─── Variant Card Renderer ──────────────────────────────────────────────────
+// ─── Landing Page Preview ───────────────────────────────────────────────────
 
-function VariantCard({
-  variant,
-  index,
-  contentType,
-  onCopy,
-}: {
-  variant: ContentVariant;
-  index: number;
-  contentType: ContentType;
-  onCopy: (text: string) => void;
-}) {
-  const colors = [
-    'from-emerald-500/10 to-teal-500/10 border-emerald-200 dark:border-emerald-800',
-    'from-violet-500/10 to-purple-500/10 border-violet-200 dark:border-violet-800',
-    'from-amber-500/10 to-orange-500/10 border-amber-200 dark:border-amber-800',
-  ];
+function LandingPagePreview({ data }: { data: Record<string, unknown> }) {
+  const hero = data.hero as { headline: string; subheadline: string; cta_text: string; cta_secondary?: string } | undefined;
+  const features = data.features as { icon: string; title: string; description: string }[] | undefined;
+  const howItWorks = data.how_it_works as { title: string; steps: { number: string; title: string; description: string }[] } | undefined;
+  const socialProof = data.social_proof as { title: string; items: { quote: string; author: string; role: string }[] } | undefined;
+  const finalCta = data.final_cta as { headline: string; subheadline: string; cta_text: string } | undefined;
+  const footer = data.footer as { tagline: string } | undefined;
 
-  const accentColors = ['text-emerald-700 dark:text-emerald-400', 'text-violet-700 dark:text-violet-400', 'text-amber-700 dark:text-amber-400'];
-
-  const renderField = (key: string, value: unknown) => {
-    if (key === 'title' || key === 'angle') return null;
-    if (typeof value === 'string') {
-      return (
-        <div key={key} className="mb-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-            {formatKey(key)}
-          </p>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{value}</p>
+  return (
+    <div className="border rounded-2xl overflow-hidden bg-white dark:bg-zinc-950 shadow-2xl">
+      {/* Nav */}
+      <div className="flex items-center justify-between px-6 py-4 border-b bg-white dark:bg-zinc-950">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-sm">
+            {(String(data.name || 'C')[0] || 'C').toUpperCase()}
+          </div>
+          <span className="font-bold text-lg">{String(data.name || 'Company')}</span>
         </div>
-      );
-    }
-    if (Array.isArray(value)) {
-      return (
-        <div key={key} className="mb-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-            {formatKey(key)}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {value.map((item, i) => (
-              <Badge key={i} variant="secondary" className="text-xs">
-                {String(item)}
-              </Badge>
-            ))}
+        <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+          <span>Features</span>
+          <span>How It Works</span>
+          <span>Testimonials</span>
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+            {hero?.cta_text || 'Get Started'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Hero */}
+      {hero && (
+        <div className="relative px-6 py-20 text-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-emerald-950/30 dark:via-zinc-950 dark:to-teal-950/30">
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 leading-tight">
+              {hero.headline}
+            </h1>
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+              {hero.subheadline}
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white text-base px-8">
+                {hero.cta_text}
+              </Button>
+              {hero.cta_secondary && (
+                <Button size="lg" variant="outline" className="text-base px-8">
+                  {hero.cta_secondary}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-      );
-    }
-    return null;
+      )}
+
+      {/* Features */}
+      {features && features.length > 0 && (
+        <div className="px-6 py-16 bg-white dark:bg-zinc-950">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">Features</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {features.map((f, i) => (
+                <div key={i} className="text-center p-6 rounded-xl border bg-muted/30 hover:shadow-md transition-shadow">
+                  <div className="text-3xl mb-3">{f.icon || '✦'}</div>
+                  <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* How It Works */}
+      {howItWorks && howItWorks.steps && (
+        <div className="px-6 py-16 bg-muted/30">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">{howItWorks.title || 'How It Works'}</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {howItWorks.steps.map((step, i) => (
+                <div key={i} className="text-center">
+                  <div className="w-12 h-12 rounded-full bg-emerald-600 text-white font-bold text-lg flex items-center justify-center mx-auto mb-4">
+                    {step.number || i + 1}
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Social Proof */}
+      {socialProof && socialProof.items && socialProof.items.length > 0 && (
+        <div className="px-6 py-16 bg-white dark:bg-zinc-950">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">{socialProof.title || 'What People Say'}</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {socialProof.items.map((item, i) => (
+                <div key={i} className="p-6 rounded-xl border bg-muted/20">
+                  <p className="text-sm leading-relaxed italic mb-4">&ldquo;{item.quote}&rdquo;</p>
+                  <div>
+                    <p className="font-semibold text-sm">{item.author}</p>
+                    <p className="text-xs text-muted-foreground">{item.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Final CTA */}
+      {finalCta && (
+        <div className="px-6 py-16 text-center bg-gradient-to-br from-emerald-600 to-teal-600 text-white">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">{finalCta.headline}</h2>
+            <p className="text-emerald-100 mb-8">{finalCta.subheadline}</p>
+            <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 text-base px-8">
+              {finalCta.cta_text}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      {footer && (
+        <div className="px-6 py-6 border-t text-center text-sm text-muted-foreground bg-muted/20">
+          {footer.tagline}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Cold Email Cards ───────────────────────────────────────────────────────
+
+function ColdEmailCards({ emails }: { emails: Record<string, unknown>[] }) {
+  const targetColors: Record<string, { bg: string; border: string; text: string }> = {
+    investor: { bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-700 dark:text-amber-400' },
+    customer: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-700 dark:text-emerald-400' },
+    partner: { bg: 'bg-violet-50 dark:bg-violet-950/30', border: 'border-violet-200 dark:border-violet-800', text: 'text-violet-700 dark:text-violet-400' },
   };
 
   return (
-    <Card className={`bg-gradient-to-br ${colors[index % 3]} border overflow-hidden`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <Badge variant="outline" className="mb-2">
-              Variant {index + 1}
-            </Badge>
-            <CardTitle className={`text-lg ${accentColors[index % 3]}`}>{variant.title}</CardTitle>
-            <CardDescription className="mt-1">{variant.angle}</CardDescription>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="shrink-0"
-            onClick={() => onCopy(JSON.stringify(variant, null, 2))}
-          >
-            <Copy className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Separator className="mb-4" />
-        {Object.entries(variant).map(([key, value]) => renderField(key, value))}
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      {emails.map((email, i) => {
+        const tType = String(email.target_type || 'customer');
+        const colors = targetColors[tType] || targetColors.customer;
+
+        return (
+          <Card key={i} className={`border-2 ${colors.border} ${colors.bg} overflow-hidden`}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <Badge className={`${colors.bg} ${colors.text} border ${colors.border} mb-2`}>
+                    {tType === 'investor' ? '💰 Investor' : tType === 'partner' ? '🤝 Partner' : '🎯 Customer'}
+                  </Badge>
+                  <CardTitle className="text-lg">{String(email.target_persona)}</CardTitle>
+                  <CardDescription className="mt-1">
+                    From: {String(email.sender_title || 'Company Rep')}
+                  </CardDescription>
+                </div>
+                <Mail className={`w-8 h-8 ${colors.text} opacity-30`} />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Subject & Preview */}
+              <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 border space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Subject:</span>
+                  <span className="font-medium text-sm">{String(email.subject_line)}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Preview:</span>
+                  <span className="text-sm text-muted-foreground">{String(email.preview_text)}</span>
+                </div>
+              </div>
+
+              {/* Email body */}
+              <div className="space-y-3 text-sm leading-relaxed">
+                <p>{String(email.greeting)}</p>
+                <p className="font-medium">{String(email.opening)}</p>
+                <p className="whitespace-pre-wrap">{String(email.body)}</p>
+              </div>
+
+              {/* CTA */}
+              <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 border">
+                <p className="text-sm mb-1">{String(email.cta)}</p>
+                <p className="text-sm text-muted-foreground">{String(email.sign_off)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
   );
 }
+
+// ─── Marketing Copy ──────────────────────────────────────────────────────────
+
+function MarketingCopyCards({ copies }: { copies: Record<string, unknown>[] }) {
+  return (
+    <div className="space-y-8">
+      {copies.map((copy, i) => {
+        const features = copy.features as { name: string; description: string; benefit: string }[] | undefined;
+        const usps = copy.usps as { title: string; description: string; proof: string }[] | undefined;
+
+        return (
+          <Card key={i} className="border-2 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 pb-4">
+              <Badge variant="outline" className="w-fit mb-2">Variant {i + 1}</Badge>
+              <CardTitle className="text-2xl">{String(copy.title)}</CardTitle>
+              <CardDescription className="text-base mt-1">
+                <span className="font-medium text-emerald-700 dark:text-emerald-400">Angle:</span> {String(copy.angle)}
+              </CardDescription>
+              <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mt-2">
+                &ldquo;{String(copy.tagline)}&rdquo;
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-4">
+              {/* Executive Summary */}
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Executive Summary</p>
+                <p className="text-sm leading-relaxed">{String(copy.executive_summary)}</p>
+              </div>
+
+              {/* Features */}
+              {features && features.length > 0 && (
+                <div>
+                  <h3 className="font-bold text-lg mb-4">Features & Benefits</h3>
+                  <div className="grid gap-4">
+                    {features.map((f, fi) => (
+                      <div key={fi} className="p-4 rounded-lg border bg-muted/20">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
+                            <Check className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{f.name}</p>
+                            <p className="text-sm text-muted-foreground mt-0.5">{f.description}</p>
+                            <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1 font-medium">
+                              Benefit: {f.benefit}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* USPs */}
+              {usps && usps.length > 0 && (
+                <div>
+                  <h3 className="font-bold text-lg mb-4">Unique Selling Propositions</h3>
+                  <div className="grid gap-4">
+                    {usps.map((u, ui) => (
+                      <div key={ui} className="p-4 rounded-lg border-2 border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20">
+                        <p className="font-bold text-emerald-800 dark:text-emerald-300">{u.title}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{u.description}</p>
+                        <p className="text-sm mt-1 italic">{u.proof}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Closing */}
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm leading-relaxed font-medium">{String(copy.closing_statement)}</p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── LinkedIn Post ───────────────────────────────────────────────────────────
+
+function LinkedInPostPreview({ post }: { post: Record<string, unknown> }) {
+  return (
+    <div className="max-w-2xl mx-auto">
+      <Card className="overflow-hidden border-2 border-zinc-200 dark:border-zinc-700">
+        {/* LinkedIn Header */}
+        <div className="px-5 py-4 flex items-center gap-3 border-b bg-white dark:bg-zinc-900">
+          <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-lg">
+            {String(post.author_name || 'U')[0].toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-[15px] flex items-center gap-1">
+              {String(post.author_name || 'Author')}
+              <span className="text-xs text-muted-foreground">· 1st</span>
+            </p>
+            <p className="text-xs text-muted-foreground truncate">{String(post.author_headline || post.author_role || '')}</p>
+            <p className="text-xs text-muted-foreground">Just now · 🌐</p>
+          </div>
+          <MoreHorizontal className="w-5 h-5 text-muted-foreground shrink-0" />
+        </div>
+
+        {/* Content */}
+        <div className="px-5 py-4 bg-white dark:bg-zinc-900">
+          <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{String(post.content || '')}</p>
+        </div>
+
+        {/* Hashtags */}
+        <div className="px-5 pb-2 bg-white dark:bg-zinc-900">
+          <div className="flex flex-wrap gap-1">
+            {((post.hashtags || []) as string[]).map((tag, i) => (
+              <span key={i} className="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+                #{tag.replace(/^#/, '')}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Engagement bar */}
+        <div className="px-5 py-2 border-t border-b bg-white dark:bg-zinc-900">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>👍 ❤️ 142</span>
+            <span>23 comments · 8 reposts</span>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="grid grid-cols-4 border-b bg-white dark:bg-zinc-900">
+          {[
+            { icon: <ThumbsUp className="w-5 h-5" />, label: 'Like' },
+            { icon: <MessageSquare className="w-5 h-5" />, label: 'Comment' },
+            { icon: <Repeat2 className="w-5 h-5" />, label: 'Repost' },
+            { icon: <Bookmark className="w-5 h-5" />, label: 'Save' },
+          ].map((action, i) => (
+            <button
+              key={i}
+              className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
+              {action.icon}
+              <span className="hidden sm:inline">{action.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* CTA note */}
+        <div className="px-5 py-3 bg-muted/30">
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold">Call to Action:</span> {String(post.call_to_action || '')}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold">Read Time:</span> {String(post.estimated_read_time || '~1 min')}
+          </p>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Format Key Helper ───────────────────────────────────────────────────────
 
 function formatKey(key: string): string {
   return key
@@ -195,21 +475,18 @@ export default function Home() {
   const [inputMode, setInputMode] = useState<InputMode>('text');
   const [url, setUrl] = useState('');
   const [pastedText, setPastedText] = useState('');
-  const [extractedText, setExtractedText] = useState('');
   const [persona, setPersona] = useState<Persona | null>(null);
-  const [contentType, setContentType] = useState<ContentType>('marketing-copy');
+  const [contentType, setContentType] = useState<ContentType>('landing-page');
   const [brief, setBrief] = useState('');
-  const [variants, setVariants] = useState<ContentVariant[]>([]);
+  const [generatedData, setGeneratedData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   // Step 1 → 2: Extract & Build Persona
   const handleExtractAndPersona = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      // Extract
       const extractRes = await fetch('/api/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -221,9 +498,7 @@ export default function Home() {
       });
       const extractData = await extractRes.json();
       if (!extractData.success) throw new Error(extractData.error);
-      setExtractedText(extractData.extractedText);
 
-      // Build Persona
       const personaRes = await fetch('/api/persona', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -240,10 +515,11 @@ export default function Home() {
     }
   }, [inputMode, url, pastedText]);
 
-  // Step 2 → 3: Generate Content
+  // Step 2 → 3/4: Generate Content
   const handleGenerate = useCallback(async () => {
     setLoading(true);
     setError('');
+    setStep('generate');
     try {
       const genRes = await fetch('/api/generate', {
         method: 'POST',
@@ -252,10 +528,11 @@ export default function Home() {
       });
       const genData = await genRes.json();
       if (!genData.success) throw new Error(genData.error);
-      setVariants(genData.variants || []);
+      setGeneratedData(genData);
       setStep('output');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Generation failed');
+      setStep('persona');
     } finally {
       setLoading(false);
     }
@@ -264,11 +541,17 @@ export default function Home() {
   // Export
   const handleExport = useCallback(
     async (format: string) => {
+      if (!generatedData) return;
       try {
         const res = await fetch('/api/export', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ variants, persona, contentType, format }),
+          body: JSON.stringify({
+            variants: generatedData,
+            persona,
+            contentType,
+            format,
+          }),
         });
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
@@ -284,39 +567,38 @@ export default function Home() {
         URL.revokeObjectURL(downloadUrl);
         toast({ title: 'Exported successfully!' });
       } catch (err: unknown) {
-        toast({ title: 'Export failed', description: err instanceof Error ? err.message : '', variant: 'destructive' });
+        toast({
+          title: 'Export failed',
+          description: err instanceof Error ? err.message : '',
+          variant: 'destructive',
+        });
       }
     },
-    [variants, persona, contentType]
+    [generatedData, persona, contentType]
   );
 
   // Copy handler
-  const handleCopy = useCallback(async (text: string, index?: number) => {
+  const handleCopy = useCallback(async (text: string) => {
     await navigator.clipboard.writeText(text);
-    if (index !== undefined) {
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
-    }
     toast({ title: 'Copied to clipboard!' });
   }, []);
 
   // Regenerate
   const handleRegenerate = useCallback(() => {
-    setVariants([]);
-    setStep('generate');
-    // Auto-trigger generation
-    setTimeout(() => {
-      handleGenerate();
-    }, 100);
+    setGeneratedData(null);
+    handleGenerate();
   }, [handleGenerate]);
 
   // Content type options
   const contentTypes: { value: ContentType; label: string; icon: React.ReactNode; desc: string }[] = [
-    { value: 'marketing-copy', label: 'Marketing Copy', icon: <Zap className="w-5 h-5" />, desc: 'Headlines, body copy, CTAs' },
-    { value: 'landing-page', label: 'Landing Page', icon: <Globe className="w-5 h-5" />, desc: 'Hero, value props, social proof' },
-    { value: 'ui-microcopy', label: 'UI Microcopy', icon: <FileText className="w-5 h-5" />, desc: 'Buttons, empty states, tooltips' },
-    { value: 'email-sequence', label: 'Email Sequence', icon: <Sparkles className="w-5 h-5" />, desc: 'Subject lines, body, sign-offs' },
+    { value: 'landing-page', label: 'Landing Page', icon: <Layout className="w-5 h-5" />, desc: 'Full website landing page' },
+    { value: 'cold-emails', label: 'Cold Emails', icon: <Mail className="w-5 h-5" />, desc: '3 emails: investor, customer, partner' },
+    { value: 'marketing-copy', label: 'Marketing Copy', icon: <FileText className="w-5 h-5" />, desc: 'Features, USPs, download-ready' },
+    { value: 'linkedin-post', label: 'LinkedIn Post', icon: <Linkedin className="w-5 h-5" />, desc: 'Authentic company post' },
   ];
+
+  // Get the content label for export
+  const getContentLabel = () => contentTypes.find((c) => c.value === contentType)?.label || contentType;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/30">
@@ -351,12 +633,10 @@ export default function Home() {
                 <CardHeader>
                   <CardTitle className="text-2xl">Who are we writing for?</CardTitle>
                   <CardDescription>
-                    Paste a profile bio, company description, or a company website URL. We&apos;ll
-                    extract identity signals and build a persona.
+                    Paste a company description, LinkedIn bio, or enter a company website URL. We&apos;ll extract identity signals and build a persona.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Input mode tabs */}
                   <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as InputMode)}>
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="text" className="gap-2">
@@ -368,14 +648,13 @@ export default function Home() {
                     </TabsList>
                     <TabsContent value="text" className="mt-4">
                       <Textarea
-                        placeholder="Paste a LinkedIn bio, resume text, company description, or any profile text here..."
+                        placeholder="Paste a company description, LinkedIn bio, or any profile text here..."
                         className="min-h-[200px] resize-y"
                         value={pastedText}
                         onChange={(e) => setPastedText(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground mt-2">
-                        Tip: The more detail you provide, the richer the persona will be. Include
-                        role, industry, skills, and interests for best results.
+                        Tip: Include company name, industry, products, target audience for best results.
                       </p>
                     </TabsContent>
                     <TabsContent value="url" className="mt-4">
@@ -385,8 +664,7 @@ export default function Home() {
                         onChange={(e) => setUrl(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground mt-2">
-                        We&apos;ll scrape the public website (About page, homepage) to extract
-                        company info. This works best with company websites.
+                        We&apos;ll scrape the public website to extract company info.
                       </p>
                     </TabsContent>
                   </Tabs>
@@ -457,37 +735,29 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Key attributes grid */}
+                  {/* Key attributes */}
                   <div className="grid grid-cols-2 gap-4">
                     {persona.industry && (
                       <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Industry
-                        </p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Industry</p>
                         <p className="text-sm font-medium mt-0.5">{persona.industry}</p>
                       </div>
                     )}
                     {persona.seniority && (
                       <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Seniority
-                        </p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Seniority</p>
                         <p className="text-sm font-medium mt-0.5 capitalize">{persona.seniority}</p>
                       </div>
                     )}
                     {persona.size && (
                       <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Company Size
-                        </p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Company Size</p>
                         <p className="text-sm font-medium mt-0.5 capitalize">{persona.size}</p>
                       </div>
                     )}
                     {(persona.tone_preference || persona.tone) && (
                       <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Tone
-                        </p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tone</p>
                         <p className="text-sm font-medium mt-0.5 capitalize">
                           {persona.tone_preference || persona.tone}
                         </p>
@@ -495,9 +765,7 @@ export default function Home() {
                     )}
                     {persona.target_audience && (
                       <div className="col-span-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Target Audience
-                        </p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Target Audience</p>
                         <p className="text-sm font-medium mt-0.5">{persona.target_audience}</p>
                       </div>
                     )}
@@ -506,58 +774,40 @@ export default function Home() {
                   {/* Skills/Offerings */}
                   {persona.skills && persona.skills.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                        Skills & Expertise
-                      </p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Skills & Expertise</p>
                       <div className="flex flex-wrap gap-1.5">
                         {persona.skills.map((skill, i) => (
-                          <Badge key={i} variant="secondary">
-                            {skill}
-                          </Badge>
+                          <Badge key={i} variant="secondary">{skill}</Badge>
                         ))}
                       </div>
                     </div>
                   )}
                   {persona.offerings && persona.offerings.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                        Offerings
-                      </p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Offerings</p>
                       <div className="flex flex-wrap gap-1.5">
                         {persona.offerings.map((item, i) => (
-                          <Badge key={i} variant="secondary">
-                            {item}
-                          </Badge>
+                          <Badge key={i} variant="secondary">{item}</Badge>
                         ))}
                       </div>
                     </div>
                   )}
-
-                  {/* Interests/Values */}
                   {persona.interests && persona.interests.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                        Interests
-                      </p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Interests</p>
                       <div className="flex flex-wrap gap-1.5">
                         {persona.interests.map((item, i) => (
-                          <Badge key={i} variant="outline">
-                            {item}
-                          </Badge>
+                          <Badge key={i} variant="outline">{item}</Badge>
                         ))}
                       </div>
                     </div>
                   )}
                   {persona.values && persona.values.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                        Brand Values
-                      </p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Brand Values</p>
                       <div className="flex flex-wrap gap-1.5">
                         {persona.values.map((item, i) => (
-                          <Badge key={i} variant="outline">
-                            {item}
-                          </Badge>
+                          <Badge key={i} variant="outline">{item}</Badge>
                         ))}
                       </div>
                     </div>
@@ -567,7 +817,7 @@ export default function Home() {
 
                   {/* Content type selection */}
                   <div>
-                    <p className="text-sm font-semibold mb-3">What kind of content do you want to generate?</p>
+                    <p className="text-sm font-semibold mb-3">What do you want to generate?</p>
                     <div className="grid grid-cols-2 gap-3">
                       {contentTypes.map((ct) => (
                         <button
@@ -600,12 +850,11 @@ export default function Home() {
                   {/* Optional brief */}
                   <div>
                     <p className="text-sm font-semibold mb-2">
-                      Content Brief{' '}
-                      <span className="text-muted-foreground font-normal">(optional)</span>
+                      Content Brief <span className="text-muted-foreground font-normal">(optional)</span>
                     </p>
                     <Textarea
-                      placeholder="Describe what you want — e.g., 'Write copy for a product launch email targeting CTOs' or 'Landing page for a new AI feature'..."
-                      className="min-h-[100px] resize-y"
+                      placeholder="Any specific instructions? e.g., 'Focus on enterprise customers' or 'Emphasize the AI-powered features'..."
+                      className="min-h-[80px] resize-y"
                       value={brief}
                       onChange={(e) => setBrief(e.target.value)}
                     />
@@ -633,7 +882,7 @@ export default function Home() {
                       ) : (
                         <Sparkles className="w-4 h-4" />
                       )}
-                      {loading ? 'Generating Content...' : 'Generate 3 Variants'}
+                      {loading ? 'Generating...' : `Generate ${getContentLabel()}`}
                     </Button>
                   </div>
                 </CardContent>
@@ -652,13 +901,13 @@ export default function Home() {
               className="flex flex-col items-center justify-center py-20 gap-4"
             >
               <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
-              <p className="text-lg font-medium">Generating your content variants...</p>
-              <p className="text-sm text-muted-foreground">This usually takes 5-10 seconds</p>
+              <p className="text-lg font-medium">Generating your {getContentLabel().toLowerCase()}...</p>
+              <p className="text-sm text-muted-foreground">This usually takes 5-15 seconds</p>
             </motion.div>
           )}
 
           {/* ── STEP 4: Output ────────────────────────────── */}
-          {step === 'output' && variants.length > 0 && (
+          {step === 'output' && generatedData && (
             <motion.div
               key="output"
               initial={{ opacity: 0, y: 20 }}
@@ -676,37 +925,48 @@ export default function Home() {
                   )}
                   <div>
                     <p className="text-sm font-semibold">{persona?.name || 'Persona'}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {contentType.replace('-', ' ')} · {variants.length} variants
-                    </p>
+                    <p className="text-xs text-muted-foreground">{getContentLabel()}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={handleRegenerate}
-                  >
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={handleRegenerate}>
                     <RefreshCw className="w-3.5 h-3.5" /> Regenerate
                   </Button>
                 </div>
               </div>
 
-              {/* Variant cards */}
-              <div className="grid gap-6">
-                {variants.map((variant, i) => (
-                  <VariantCard
-                    key={i}
-                    variant={variant}
-                    index={i}
-                    contentType={contentType}
-                    onCopy={(text) => handleCopy(text, i)}
-                  />
-                ))}
-              </div>
+              {/* ── Landing Page Output ─────────────── */}
+              {contentType === 'landing-page' && generatedData.hero && (
+                <div className="space-y-4">
+                  <LandingPagePreview data={generatedData} />
+                  <div className="flex justify-center">
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => handleCopy(JSON.stringify(generatedData, null, 2))}
+                    >
+                      <Copy className="w-4 h-4" /> Copy Page JSON
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-              {/* Actions */}
+              {/* ── Cold Emails Output ──────────────── */}
+              {contentType === 'cold-emails' && generatedData.emails && (
+                <ColdEmailCards emails={generatedData.emails as Record<string, unknown>[]} />
+              )}
+
+              {/* ── Marketing Copy Output ───────────── */}
+              {contentType === 'marketing-copy' && generatedData.copies && (
+                <MarketingCopyCards copies={generatedData.copies as Record<string, unknown>[]} />
+              )}
+
+              {/* ── LinkedIn Post Output ─────────────── */}
+              {contentType === 'linkedin-post' && generatedData.post && (
+                <LinkedInPostPreview post={generatedData.post as Record<string, unknown>} />
+              )}
+
+              {/* Actions bar */}
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50 p-4 rounded-xl">
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setStep('persona')}>
@@ -718,14 +978,9 @@ export default function Home() {
                     variant="outline"
                     size="sm"
                     className="gap-1.5"
-                    onClick={() => handleCopy(
-                      variants.map((v, i) => `--- Variant ${i + 1}: ${v.title} ---\n${Object.entries(v)
-                        .filter(([, val]) => val !== undefined && val !== null)
-                        .map(([k, val]) => `${formatKey(k)}: ${Array.isArray(val) ? val.join(', ') : val}`)
-                        .join('\n')}`).join('\n\n')
-                    )}
+                    onClick={() => handleCopy(JSON.stringify(generatedData, null, 2))}
                   >
-                    <Copy className="w-3.5 h-3.5" /> Copy All
+                    <Copy className="w-3.5 h-3.5" /> Copy JSON
                   </Button>
                   <Button
                     variant="outline"
